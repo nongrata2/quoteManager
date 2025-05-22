@@ -13,10 +13,10 @@ import (
 )
 
 type DBInterface interface {
-	Add(ctx context.Context, quote models.Quote) error
+	AddQuote(ctx context.Context, quote models.Quote) error
 	GetQuotes(ctx context.Context, filters models.QuoteFilter) ([]models.Quote, error)
 	GetRandomQuote(ctx context.Context) (models.Quote, error)
-	Delete(ctx context.Context, quoteID string) error
+	DeleteQuote(ctx context.Context, quoteID string) error
 }
 
 type DB struct {
@@ -46,7 +46,7 @@ func New(log *slog.Logger, address string) (*DB, error) {
 	}, nil
 }
 
-func (db *DB) Add(ctx context.Context, quote models.Quote) error {
+func (db *DB) AddQuote(ctx context.Context, quote models.Quote) error {
 
 	db.Log.Debug("started adding quote DB")
 
@@ -147,7 +147,7 @@ func (db *DB) GetRandomQuote(ctx context.Context) (models.Quote, error) {
 	return quote, nil
 }
 
-func (db *DB) Delete(ctx context.Context, quoteID string) error {
+func (db *DB) DeleteQuote(ctx context.Context, quoteID string) error {
 	db.Log.Debug("started deleting quote from DB")
 
 	query := `DELETE FROM quotes WHERE id = $1`

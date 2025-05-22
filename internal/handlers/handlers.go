@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	stdErrors "errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 
 	"quotemanager/internal/models"
 	"quotemanager/internal/repositories"
+	"quotemanager/pkg/errors"
 )
 
 func AddQuoteHandler(log *slog.Logger, db repositories.DBInterface) http.HandlerFunc {
@@ -30,7 +32,7 @@ func AddQuoteHandler(log *slog.Logger, db repositories.DBInterface) http.Handler
 			Quote:  request.Quote,
 		}
 
-		if err := db.Add(r.Context(), newQuote); err != nil {
+		if err := db.AddQuote(r.Context(), newQuote); err != nil {
 			log.Error("failed to add quote", "error", err)
 			http.Error(w, "Failed to add quote", http.StatusInternalServerError)
 			return
@@ -49,7 +51,7 @@ func AddQuoteHandler(log *slog.Logger, db repositories.DBInterface) http.Handler
 func GetQuotesHandler(log *slog.Logger, db repositories.DBInterface) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Debug("Getting quote data handler")
-		log.Info("Started getting quote from library")
+		log.Info("Started fetching quote")
 
 		filters := models.QuoteFilter{
 			Author: r.URL.Query().Get("author"),
@@ -63,9 +65,10 @@ func GetQuotesHandler(log *slog.Logger, db repositories.DBInterface) http.Handle
 		}
 
 		if len(quotes) == 0 {
-			_, err := w.Write([]byte("No quotes was found\n"))
+			w.Header().Set("Content-Type", "application/json")
+			_, err := w.Write([]byte("[]\n"))
 			if err != nil {
-				log.Error("error writing", "error", err)
+				log.Error("error writing empty response", "error", err)
 			}
 		} else {
 			w.Header().Set("Content-Type", "application/json")
@@ -82,7 +85,7 @@ func GetQuotesHandler(log *slog.Logger, db repositories.DBInterface) http.Handle
 				log.Error("error writing", "error", err)
 			}
 		}
-		log.Info("Finished getting data from library")
+		log.Info("Finished fetching quotes")
 	}
 }
 
@@ -92,9 +95,14 @@ func DeleteQuoteHandler(log *slog.Logger, db repositories.DBInterface) http.Hand
 		log.Info("Started deleting quote")
 		quoteID := r.PathValue("quoteID")
 
-		if err := db.Delete(r.Context(), quoteID); err != nil {
-			log.Error("failed to delete quote", "error", err)
-			http.Error(w, "Failed to delete quote", http.StatusInternalServerError)
+		if err := db.DeleteQuote(r.Context(), quoteID); err != nil {
+			if stdErrors.Is(err, errors.ErrQuoteNotFound) {
+				log.Warn("The quote to delete is not found", "error", err)
+				http.Error(w, "The quote to delete is not found", http.StatusNotFound)
+			} else {
+				log.Error("failed to delete quote", "error", err)
+				http.Error(w, "Failed to delete quote", http.StatusInternalServerError)
+			}
 			return
 		}
 
@@ -116,8 +124,13 @@ func GetRandomQuoteHandler(log *slog.Logger, db repositories.DBInterface) http.H
 
 		quote, err := db.GetRandomQuote(r.Context())
 		if err != nil {
-			log.Error("failed to get random quote", "error", err)
-			http.Error(w, "Failed to get random quote", http.StatusInternalServerError)
+			if stdErrors.Is(err, errors.ErrQuoteNotFound) {
+				log.Warn("random quote not found", "error", err)
+				http.Error(w, "Random quote not found", http.StatusNotFound)
+			} else {
+				log.Error("failed to get random quote", "error", err)
+				http.Error(w, "Failed to get random quote", http.StatusInternalServerError)
+			}
 			return
 		}
 
