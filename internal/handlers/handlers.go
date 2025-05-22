@@ -52,7 +52,7 @@ func GetQuotesHandler(log *slog.Logger, db repositories.DBInterface) http.Handle
 		log.Info("Started getting quote from library")
 
 		filters := models.QuoteFilter{
-			Author: r.URL.Query().Get("group_name"),
+			Author: r.URL.Query().Get("author"),
 		}
 
 		quotes, err := db.GetQuotes(r.Context(), filters)

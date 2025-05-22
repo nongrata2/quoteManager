@@ -51,8 +51,8 @@ func (db *DB) Add(ctx context.Context, quote models.Quote) error {
 	db.Log.Debug("started adding quote DB")
 
 	query := `
-        INSERT INTO quotes (quote_id, author, quote)
-        VALUES ($1, $2, $3)
+        INSERT INTO quotes (author, quote)
+        VALUES ($1, $2)
     `
 	_, err := db.Conn.Exec(ctx, query,
 		quote.Author,
@@ -129,9 +129,9 @@ func (db *DB) GetRandomQuote(ctx context.Context) (models.Quote, error) {
 	db.Log.Debug("executing query", "query", strings.TrimSpace(query))
 
 	err := db.Conn.QueryRow(ctx, query).Scan(
-		quote.ID,
-		quote.Quote,
-		quote.Author,
+		&quote.ID,
+		&quote.Quote,
+		&quote.Author,
 	)
 
 	if err != nil {
