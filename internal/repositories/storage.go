@@ -8,9 +8,18 @@ import (
 	"quotemanager/pkg/errors"
 	"strings"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+type PoolConnector interface {
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
+	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+	Ping(ctx context.Context) error
+	Close()
+}
 
 type DBInterface interface {
 	AddQuote(ctx context.Context, quote models.Quote) error
@@ -21,7 +30,7 @@ type DBInterface interface {
 
 type DB struct {
 	Log  *slog.Logger
-	Conn *pgxpool.Pool
+	Conn PoolConnector
 }
 
 var _ DBInterface = (*DB)(nil)
