@@ -314,7 +314,7 @@ func TestDB_DeleteQuote(t *testing.T) {
 			name: "OK - Quote deleted",
 			args: args{
 				ctx:     context.Background(),
-				quoteID: "id123",
+				quoteID: "1",
 			},
 			mockBehavior: func(args args) {
 				mock.ExpectExec(`DELETE FROM quotes WHERE id = \$1`).
@@ -327,7 +327,7 @@ func TestDB_DeleteQuote(t *testing.T) {
 			name: "Quote Not Found - ErrQuoteNotFound",
 			args: args{
 				ctx:     context.Background(),
-				quoteID: "idNonExistent",
+				quoteID: "idNotExists",
 			},
 			mockBehavior: func(args args) {
 				mock.ExpectExec(`DELETE FROM quotes WHERE id = \$1`).

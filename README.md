@@ -14,6 +14,11 @@ DB_PORT=5432
 docker compose up --build
 ```
 
+You can run tests from root directory with: 
+```sh
+go test ./... -v
+```
+
 # Example of commands:
 1. Create Quote:
 ```sh
